@@ -155,7 +155,7 @@ def get_device():
         return TORCH_CUDA_DEVICE
 
 @torch.no_grad()
-def estimate_loss(model, dataloader_test, batch_num, eval_iters=75):
+def estimate_loss(model, dataloader_test, batch_num, eval_iters):
     out = 0
     model.eval()
     losses = torch.zeros(eval_iters)
@@ -171,7 +171,7 @@ def estimate_loss(model, dataloader_test, batch_num, eval_iters=75):
     model.train()
     return out
 
-def train(cur_epoch, model, dataloader, dataloader_test, loss, opt, lr_scheduler=None, num_iters=-1, save_checkpoint_steps=1000, eval_interval=50):
+def train(cur_epoch, model, dataloader, dataloader_test, loss, opt, lr_scheduler=None, num_iters=-1, save_checkpoint_steps=1000, eval_interval=50, eval_iters=75):
     best_eval_acc        = 0.0
     best_eval_acc_epoch  = -1
     best_eval_loss       = float("inf")
@@ -210,7 +210,7 @@ def train(cur_epoch, model, dataloader, dataloader_test, loss, opt, lr_scheduler
             bar_train.update(1)
             if batch_num % eval_interval == 0:
               loss_hist_train.append(out.item())
-              val_loss = estimate_loss(model, dataloader_test, batch_num)
+              val_loss = estimate_loss(model, dataloader_test, batch_num, eval_iters)
               loss_hist_val.append(val_loss)
             
             if save_steps % save_checkpoint_steps == 0:
