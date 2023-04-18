@@ -156,20 +156,23 @@ def get_device():
 
 @torch.no_grad()
 def estimate_loss(model, dataloader_test, batch_num, eval_iters):
-    out = 0
     model.eval()
     losses = torch.zeros(eval_iters)
+    accs = torch.zeros(eval_iters)
     print(f"\nValidating iter: {batch_num}")
     for k in range(eval_iters):
       batch = next(iter(dataloader_test))
       x = batch[0].to(get_device())
       tgt = batch[1].to(get_device())
       y, loss = model(x, tgt)
+      acc = float(compute_epiano_accuracy(y, tgt))
       losses[k] = loss.item()
-    out = losses.mean()
-    print(f"End validation iter: {batch_num}  Loss: {out}")
+      accs[k] = acc
+    loss_out = losses.mean()
+    acc_out = accs.mean()
+    print(f"End validation iter: {batch_num}  Loss: {loss_out}  -  Accuracy: {acc_out}")
     model.train()
-    return out
+    return loss_out, acc_out
 
 def train(cur_epoch, model, dataloader, dataloader_test, loss, opt, lr_scheduler=None, num_iters=-1, save_checkpoint_steps=1000, eval_interval=50, eval_iters=75):
     best_eval_acc        = 0.0
@@ -178,6 +181,8 @@ def train(cur_epoch, model, dataloader, dataloader_test, loss, opt, lr_scheduler
     best_eval_loss_epoch = -1
     loss_hist_train = []
     loss_hist_val = []
+    acc_hist_train = []
+    acc_hist_val = []
     save_steps = 0
     out = -1
     model.train()
@@ -189,11 +194,6 @@ def train(cur_epoch, model, dataloader, dataloader_test, loss, opt, lr_scheduler
             tgt = batch[1].to(get_device())
 
             y, out = model(x, tgt)
-
-            # y   = y.reshape(y.shape[0] * y.shape[1], -1)
-            # tgt = tgt.flatten()
-
-            # out = loss.forward(y, tgt)
 
             out.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 0.5)
@@ -210,9 +210,12 @@ def train(cur_epoch, model, dataloader, dataloader_test, loss, opt, lr_scheduler
             bar_train.update(1)
             if batch_num % eval_interval == 0:
               loss_hist_train.append(out.item())
-              val_loss = estimate_loss(model, dataloader_test, batch_num, eval_iters)
+              val_loss, val_acc = estimate_loss(model, dataloader_test, batch_num, eval_iters)
               loss_hist_val.append(val_loss)
-            
+              acc_train = float(compute_epiano_accuracy(y, tgt))
+              acc_hist_train.append(acc_train)
+              acc_hist_val.append(val_acc)
+
             if save_steps % save_checkpoint_steps == 0:
                 print('Saving model progress. Please wait...')
                 print('gpt2_rpr_checkpoint_' + str(cur_epoch) + '_epoch_' + str(save_steps) + '_steps_' + str(round(float(out), 4)) + '_loss.pth')
@@ -228,7 +231,7 @@ def train(cur_epoch, model, dataloader, dataloader_test, loss, opt, lr_scheduler
             if batch_num == num_iters:
                 break
 
-    return loss_hist_train, loss_hist_val
+    return loss_hist_train, loss_hist_val, acc_hist_train, acc_hist_val
 
 def compute_epiano_accuracy(out, tgt):
     softmax = nn.Softmax(dim=-1)
