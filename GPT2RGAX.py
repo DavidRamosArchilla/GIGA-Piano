@@ -154,12 +154,28 @@ def get_device():
     else:
         return TORCH_CUDA_DEVICE
 
-def train(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, num_iters=-1, save_checkpoint_steps=1000):
+@torch.no_grad()
+def estimate_loss(model, dataloader_test, loss, eval_iters=100):
+    out = 0
+    model.eval()
+    losses = torch.zeros(eval_iters)
+    for k in range(eval_iters):
+        batch = next(iter(dataloader_test))
+        x = batch[0].to(get_device())
+        tgt = batch[1].to(get_device())
+        logits, loss = model(x)
+        losses[k] = loss.item()
+    out = losses.mean()
+    model.train()
+    return out
+
+def train(cur_epoch, model, dataloader, dataloader_test, loss, opt, lr_scheduler=None, num_iters=-1, save_checkpoint_steps=1000, eval_interval=50):
     best_eval_acc        = 0.0
     best_eval_acc_epoch  = -1
     best_eval_loss       = float("inf")
     best_eval_loss_epoch = -1
-    loss_hist = []
+    loss_hist_train = []
+    loss_hist_val = []
     save_steps = 0
     out = -1
     model.train()
@@ -190,9 +206,10 @@ def train(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, num_iters=
             lr = opt.param_groups[0]['lr']
             bar_train.set_description(f'Epoch: {cur_epoch} Loss: {float(out):.4} LR: {float(lr):.8}')
             bar_train.update(1)
-            loss_hist.append(out.item())
-            
-            
+            if batch_num % eval_interval == 0:
+              loss_hist_train.append(out.item())
+              val_loss = estimate_loss(model, dataloader_test, loss)
+              loss_hist_val.appen(val_loss)
             
             if save_steps % save_checkpoint_steps == 0:
                 print('Saving model progress. Please wait...')
@@ -209,7 +226,7 @@ def train(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, num_iters=
             if batch_num == num_iters:
                 break
 
-    return loss_hist
+    return loss_hist_train, loss_hist_val
 
 def compute_epiano_accuracy(out, tgt):
     softmax = nn.Softmax(dim=-1)
