@@ -188,12 +188,12 @@ def train(cur_epoch, model, dataloader, dataloader_test, loss, opt, lr_scheduler
             x   = batch[0].to(get_device())
             tgt = batch[1].to(get_device())
 
-            y, _ = model(x)
+            y, out = model(x, tgt)
 
-            y   = y.reshape(y.shape[0] * y.shape[1], -1)
-            tgt = tgt.flatten()
+            # y   = y.reshape(y.shape[0] * y.shape[1], -1)
+            # tgt = tgt.flatten()
 
-            out = loss.forward(y, tgt)
+            # out = loss.forward(y, tgt)
 
             out.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 0.5)
