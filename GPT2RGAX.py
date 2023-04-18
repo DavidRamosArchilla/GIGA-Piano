@@ -159,15 +159,15 @@ def estimate_loss(model, dataloader_test, batch_num, eval_iters=75):
     out = 0
     model.eval()
     losses = torch.zeros(eval_iters)
-    print(f"Validating iter: {batch_num}")
+    print(f"\nValidating iter: {batch_num}")
     for k in range(eval_iters):
       batch = next(iter(dataloader_test))
       x = batch[0].to(get_device())
       tgt = batch[1].to(get_device())
       y, loss = model(x, tgt)
       losses[k] = loss.item()
-    print(f"End validation iter: {batch_num}")
     out = losses.mean()
+    print(f"End validation iter: {batch_num}  Loss: {out}")
     model.train()
     return out
 
