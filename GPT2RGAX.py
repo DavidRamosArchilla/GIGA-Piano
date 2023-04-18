@@ -155,16 +155,18 @@ def get_device():
         return TORCH_CUDA_DEVICE
 
 @torch.no_grad()
-def estimate_loss(model, dataloader_test, eval_iters=100):
+def estimate_loss(model, dataloader_test, batch_num, eval_iters=75):
     out = 0
     model.eval()
     losses = torch.zeros(eval_iters)
+    print(f"Validating iter: {batch_num}")
     for k in range(eval_iters):
-        batch = next(iter(dataloader_test))
-        x = batch[0].to(get_device())
-        tgt = batch[1].to(get_device())
-        y, loss = model(x, tgt)
-        losses[k] = loss.item()
+      batch = next(iter(dataloader_test))
+      x = batch[0].to(get_device())
+      tgt = batch[1].to(get_device())
+      y, loss = model(x, tgt)
+      losses[k] = loss.item()
+    print(f"End validation iter: {batch_num}")
     out = losses.mean()
     model.train()
     return out
@@ -208,8 +210,8 @@ def train(cur_epoch, model, dataloader, dataloader_test, loss, opt, lr_scheduler
             bar_train.update(1)
             if batch_num % eval_interval == 0:
               loss_hist_train.append(out.item())
-              val_loss = estimate_loss(model, dataloader_test)
-              loss_hist_val.appen(val_loss)
+              val_loss = estimate_loss(model, dataloader_test, batch_num)
+              loss_hist_val.append(val_loss)
             
             if save_steps % save_checkpoint_steps == 0:
                 print('Saving model progress. Please wait...')
@@ -217,7 +219,7 @@ def train(cur_epoch, model, dataloader, dataloader_test, loss, opt, lr_scheduler
                 torch.save(model.state_dict(), 'gpt2_rpr_checkpoint_' + str(cur_epoch) + '_epoch_' + str(save_steps) + '_steps_' + str(round(float(out), 4)) + '_loss.pth')
                 print('Done!')
                 print('Saving training loss graph...')
-                tr_loss_list = [sublist for sublist in loss_hist]
+                tr_loss_list = [sublist for sublist in loss_hist_train]
                 plt.plot([i for i in range(len(tr_loss_list))] ,tr_loss_list, 'b')
                 plt.savefig('gpt2_rpr_checkpoint_training_loss_graph.png')
                 print('Done! Continuing training...')
