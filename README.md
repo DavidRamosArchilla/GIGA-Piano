@@ -1,15 +1,11 @@
 # GIGA Piano
 ## Piano Transformer model trained on 2.6GB of MIDI piano music
 
-## DEPRECEATED in favor of [GIGA Piano XL](https://github.com/asigalov61/GIGA-Piano-XL)
-
 ***
 
-![big-piano-1920x1080-5-1024x576](https://user-images.githubusercontent.com/56325539/185933302-bdd4fbe3-d8de-496e-b946-0b66bfae923c.jpg)
+This is a project to compose music automatically using artificial intelligence given a priming sequence. It is possible to choose the style of the compositions between baroque, romantic and vanguradist.
 
 ***
-
-### Original Version
 
 [![Open In Colab][colab-badge]][colab-notebook3]
 
