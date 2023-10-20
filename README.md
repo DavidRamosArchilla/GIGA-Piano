@@ -3,7 +3,8 @@
 
 ***
 
-This is a project to compose music automatically using artificial intelligence given a priming sequence. It is possible to choose the style of the compositions between baroque, romantic and vanguradist.
+This is a project to compose music automatically using artificial intelligence given a priming sequence. It is possible to choose the style of the compositions between baroque, romantic and vanguardist.  
+It is my final degree project for software engineering.
 
 ***
 ### Compose your own music!
